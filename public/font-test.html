@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字体测试页面</title>
+    <style>
+        @font-face {
+            font-family: 'MapleMono';
+            src: url('/MapleMono-NF-CN-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+        
+        /* 为 SVG 中的字体名称添加别名 */
+        @font-face {
+            font-family: 'Maple Mono NF CN';
+            src: url('/MapleMono-NF-CN-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+        
+        body {
+            font-family: 'MapleMono', 'Courier New', monospace;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        
+        .font-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>MapleMono 字体测试</h1>
+    
+    <div class="test-section">
+        <h2>字体信息</h2>
+        <div class="font-info">
+            <p><strong>字体名称：</strong> MapleMono-NF-CN-SemiBold</p>
+            <p><strong>字体类型：</strong> 等宽字体 (Monospace)</p>
+            <p><strong>字体权重：</strong> 600 (SemiBold)</p>
+            <p><strong>支持语言：</strong> 中文、英文、符号</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>中文字符测试</h2>
+        <p>这是中文字符测试：你好世界！欢迎使用 MapleMono 字体。</p>
+        <p>数字和符号：0123456789 !@#$%^&*()</p>
+        <p>特殊字符：★☆◆◇■□▲△▼▽</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>英文字符测试</h2>
+        <p>This is English text test: Hello World! Welcome to MapleMono font.</p>
+        <p>Code example: function hello() { console.log("Hello"); }</p>
+        <p>Mixed content: 中英文混合 Mixed Chinese and English</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>代码示例</h2>
+        <pre>
+function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+console.log(fibonacci(10)); // 输出: 55
+        </pre>
+    </div>
+    
+    <div class="test-section">
+        <h2>字体对比</h2>
+        <p style="font-family: 'MapleMono', monospace;">MapleMono 字体：Hello World 你好世界</p>
+        <p style="font-family: 'Maple Mono NF CN', monospace;">Maple Mono NF CN 字体：Hello World 你好世界</p>
+        <p style="font-family: 'Courier New', monospace;">Courier New 字体：Hello World 你好世界</p>
+        <p style="font-family: Arial, sans-serif;">Arial 字体：Hello World 你好世界</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>SVG 字体测试</h2>
+        <p>测试 SVG 中使用的字体名称：</p>
+        <svg width="200" height="50" style="border: 1px solid #ccc;">
+            <text x="10" y="30" font-family="Maple Mono NF CN" font-size="16" fill="#333">SVG 中的 Maple Mono NF CN</text>
+        </svg>
+        <br><br>
+        <svg width="200" height="50" style="border: 1px solid #ccc;">
+            <text x="10" y="30" font-family="MapleMono" font-size="16" fill="#333">SVG 中的 MapleMono</text>
+        </svg>
+    </div>
+    
+    <script>
+        // 检查字体是否加载成功
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.fonts) {
+                document.fonts.load('600 16px MapleMono').then(function() {
+                    console.log('MapleMono 字体加载成功');
+                }).catch(function() {
+                    console.log('MapleMono 字体加载失败');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

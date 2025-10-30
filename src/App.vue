@@ -1,36 +1,73 @@
 <template>
-  <div class="app-root">
-    <header>
-      <h1>VL-Anything — Vue 演示</h1>
-      <p>使用 draw.io 导出的 SVG 来制作交互式课件（Vue 版本）。</p>
-    </header>
-
-    <main>
-  <SvgSlide src="/demo.drawio.svg" />
-
-      <section style="margin-top: 1rem">
-        <div class="box green"></div>
-      </section>
-    </main>
-  </div>
+  <n-config-provider :theme="theme">
+    <div id="app">
+      <router-view />
+    </div>
+  </n-config-provider>
 </template>
 
 <script setup>
-import SvgSlide from '@/components/SvgSlide.vue'
+import { ref } from 'vue'
+import { NConfigProvider, darkTheme } from 'naive-ui'
+
+// 简单的主题状态
+const theme = ref(null)
+
+// 提供主题切换方法给子组件
+const setTheme = (newTheme) => {
+  theme.value = newTheme
+  // 保存到本地存储
+  localStorage.setItem('theme', newTheme === darkTheme ? 'dark' : 'light')
+}
+
+// 初始化主题
+const initTheme = () => {
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme === 'dark') {
+    theme.value = darkTheme
+  } else {
+    theme.value = null
+  }
+}
+
+// 初始化
+initTheme()
+
+// 提供全局方法
+window.setTheme = setTheme
 </script>
 
 <style>
-.app-root {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  padding: 1rem;
+/* 定义自定义字体 */
+@font-face {
+  font-family: 'MapleMono';
+  src: url('/MapleMono-NF-CN-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
 }
-.box {
-  width: 75px;
-  height: 75px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(90deg, #0ae448, #abff84);
+
+/* 为 SVG 中的字体名称添加别名 */
+@font-face {
+  font-family: 'Maple Mono NF CN';
+  src: url('/MapleMono-NF-CN-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  font-family: 'MapleMono', 'Courier New', monospace;
+}
+
+#app {
+  background: #f5f5f5;
 }
 </style>
