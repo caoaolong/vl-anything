@@ -13,11 +13,29 @@ export async function drawio_svg_load(container, url) {
 }
 
 export function drawio_svg_initialize(draw) {
-	draw.find('[data-cell-id*="button"]').each(button => {
-		button.addClass("vl-button")
-	})
+    draw.find('[data-cell-id*="button"]').each(button => {
+        // 设置变换中心点为元素中心
+        gsap.set(button.node, { transformOrigin: "center center" })
 
-	gsap.to(".vl-button", {
-		rotation: 10
-	})
+        button.node.addEventListener('mouseenter', () => {
+            gsap.fromTo(button.node,
+                { scale: 1 },
+                { scale: 1.01, duration: 0.2, ease: "power1.inOut" }
+            );
+        });
+
+        button.node.addEventListener('mouseleave', () => {
+            gsap.to(button.node, {
+                scale: 1,
+                duration: 0.2,
+                ease: "power1.inOut"
+            });
+        });
+
+        button.addClass("vl-button")
+    })
+
+    // gsap.to(".vl-button", {
+    //     rotation: 10
+    // })
 }
