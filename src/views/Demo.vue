@@ -4,26 +4,23 @@
       <template #header-extra>
         <n-tag type="info">交互式演示</n-tag>
       </template>
-      
+
       <n-space vertical :size="24">
         <div class="demo-section">
           <h3>SVG 交互演示</h3>
           <p>这里展示使用 draw.io 导出的 SVG 制作的交互式课件。</p>
-          
+
           <n-divider />
-          
-          <div class="svg-container">
-            <div ref="svgContainer" class="svg-wrapper"></div>
-            <div class="box green"></div>
-          </div>
+          <svg-viewer src="/demo.drawio.svg" width="100%" height="400px" />
+          <div class="box green"></div>
         </div>
-        
+
         <n-divider />
-        
+
         <div class="demo-section">
           <h3>组件演示</h3>
           <p>展示 Naive UI 组件的使用效果。</p>
-          
+
           <n-grid :cols="2" :x-gap="16" :y-gap="16">
             <n-gi>
               <n-card title="按钮组件" size="small">
@@ -36,7 +33,7 @@
                 </n-space>
               </n-card>
             </n-gi>
-            
+
             <n-gi>
               <n-card title="输入组件" size="small">
                 <n-space vertical>
@@ -48,9 +45,9 @@
             </n-gi>
           </n-grid>
         </div>
-        
+
         <n-divider />
-        
+
         <div class="demo-section">
           <h3>数据展示</h3>
           <n-data-table
@@ -65,8 +62,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
-import { gsap } from 'gsap'
+import { ref, onMounted, h } from "vue";
+import { gsap } from "gsap";
 import {
   NCard,
   NSpace,
@@ -78,89 +75,86 @@ import {
   NInput,
   NSelect,
   NDatePicker,
-  NDataTable
-} from 'naive-ui'
-import { load_drawio_svg } from '@/utils/loader.js'
+  NDataTable,
+} from "naive-ui";
+import SvgViewer from "@/components/SvgViewer.vue";
+import { drawio_svg_load, drawio_svg_initialize } from "@/utils/loader.js";
 
-const svgContainer = ref(null)
+const svgContainer = ref(null);
 
 // 选择器选项
 const selectOptions = [
-  { label: '选项1', value: 'option1' },
-  { label: '选项2', value: 'option2' },
-  { label: '选项3', value: 'option3' }
-]
+  { label: "选项1", value: "option1" },
+  { label: "选项2", value: "option2" },
+  { label: "选项3", value: "option3" },
+];
 
 // 表格列配置
 const tableColumns = [
   {
-    title: '名称',
-    key: 'name'
+    title: "名称",
+    key: "name",
   },
   {
-    title: '年龄',
-    key: 'age'
+    title: "年龄",
+    key: "age",
   },
   {
-    title: '地址',
-    key: 'address'
+    title: "地址",
+    key: "address",
   },
   {
-    title: '操作',
-    key: 'actions',
+    title: "操作",
+    key: "actions",
     render: (row) => {
-      return h(NButton, { size: 'small' }, { default: () => '编辑' })
-    }
-  }
-]
+      return h(NButton, { size: "small" }, { default: () => "编辑" });
+    },
+  },
+];
 
 // 表格数据
 const tableData = ref([
   {
     key: 0,
-    name: '张三',
+    name: "张三",
     age: 32,
-    address: '北京市朝阳区'
+    address: "北京市朝阳区",
   },
   {
     key: 1,
-    name: '李四',
+    name: "李四",
     age: 42,
-    address: '上海市浦东新区'
+    address: "上海市浦东新区",
   },
   {
     key: 2,
-    name: '王五',
+    name: "王五",
     age: 32,
-    address: '广州市天河区'
-  }
-])
+    address: "广州市天河区",
+  },
+]);
 
 // 分页配置
 const pagination = {
-  pageSize: 10
-}
+  pageSize: 10,
+};
 
 const move = () => {
   // 使用 gsap 动画
-  gsap.to('.box', { x: 200, duration: 1 })
-}
+  gsap.to(".box", { x: 200, duration: 1 });
+};
 
 // 加载 SVG 并设置交互
 onMounted(async () => {
   try {
-    const draw = await load_drawio_svg(svgContainer, '/demo.drawio.svg')
+    const draw = await drawio_svg_load(svgContainer, "/demo.drawio.svg");
     if (draw) {
-      // 尝试找到 data-cell-id="button" 并绑定事件
-      const button = draw.findOne('[data-cell-id="button"]')
-      if (button) {
-        button.on('click', move)
-      }
+      drawio_svg_initialize(draw);
     }
   } catch (e) {
-    console.error('加载 SVG 失败', e)
+    console.error("加载 SVG 失败", e);
   }
-})
+});
 </script>
 
 <style scoped>
