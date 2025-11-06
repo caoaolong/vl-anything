@@ -2,7 +2,6 @@
 import { ref, watch } from "vue";
 import { DockviewVue } from "dockview-vue";
 import type { DockviewApi, DockviewReadyEvent } from "dockview-vue";
-import type { Shape } from "@svgdotjs/svg.js";
 
 const api = ref<DockviewApi | null>(null);
 
@@ -20,7 +19,6 @@ const loadLayout = () => {
   if (layoutString) {
     const layout = JSON.parse(layoutString);
     api.value?.fromJSON(layout);
-    console.log(api.value?.panels);
     return;
   }
 
@@ -33,12 +31,7 @@ const loadLayout = () => {
   api.value?.addPanel({
     id: "scene",
     component: "ScenePanel",
-    title: "Scene",
-    params: {
-      onSelect: (shape: Shape) => {
-        console.log(shape);
-      }
-    }
+    title: "Scene"
   });
 };
 

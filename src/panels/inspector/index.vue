@@ -93,7 +93,6 @@ const showShapeProps = function (vg: VectorGraphics | undefined) {
     })
     showProps.push(entry);
   })
-  console.log(showProps);
   currentView.value = showProps;
 }
 

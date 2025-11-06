@@ -23,7 +23,6 @@ function FormatLabel(input: string): string {
 }
 
 function CreateShapeProps(shape: Shape, arg: any): VectorGraphics | null {
-	console.log(arg);
 	const constructor = shapeMapper[shape.type];
 	if (!constructor) return null;
 	return constructor(arg);
@@ -35,7 +34,6 @@ function EntityProps(vg: VectorGraphics): Record<string, Record<string, any>> {
 	for (const prop of props) {
 		let parts = prop.split("__");
 		if (parts.length !== 2) {
-			console.warn(`Property ${prop} does not follow naming convention <className>__<propertyName>`);
 			continue;
 		}
 		const [className, field] = parts;
