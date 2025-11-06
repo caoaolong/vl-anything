@@ -1,5 +1,17 @@
 import { VectorGraphics } from "./vector_graphics";
 import { Rect } from "./rect";
+import type { Shape } from "@svgdotjs/svg.js";
+
+const ConstantMapper: Record<string, any> = {
+	"vector_graphics__x": 0,
+	"vector_graphics__y": 0,
+	"rect__width": 50,
+	"rect__height": 50
+}
+
+const shapeMapper: Record<string, (arg: any) => VectorGraphics> = {
+	"rect": (arg: any) => new Rect(arg)
+}
 
 function FormatLabel(input: string): string {
 	return input
@@ -10,7 +22,14 @@ function FormatLabel(input: string): string {
 		.join(' ');                    // 用空格连接
 }
 
-function EntityProps(vg: VectorGraphics) {
+function CreateShapeProps(shape: Shape, arg: any): VectorGraphics | null {
+	console.log(arg);
+	const constructor = shapeMapper[shape.type];
+	if (!constructor) return null;
+	return constructor(arg);
+}
+
+function EntityProps(vg: VectorGraphics): Record<string, Record<string, any>> {
 	const props: string[] = Object.getOwnPropertyNames(vg);
 	const result: Record<string, Record<string, any>> = {};
 	for (const prop of props) {
@@ -32,4 +51,4 @@ function EntityProps(vg: VectorGraphics) {
 	return result;
 }
 
-export { VectorGraphics, Rect, EntityProps, FormatLabel };
+export { VectorGraphics, Rect, EntityProps, FormatLabel, CreateShapeProps, ConstantMapper };
