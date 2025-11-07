@@ -12,17 +12,46 @@ import "@svgdotjs/svg.panzoom.js";
 import { onMounted, ref } from "vue";
 import { bus } from "@/utils/bus";
 import { showAxis, showView } from "@/utils/scene";
+import { UpdateShape } from "@/entites/vg";
 
-const shapes = ref<Shape[]>([]);
+const shapes = ref<Record<string, Shape>>({});
+// 标志位：用于防止程序更新时触发拖拽事件
+const isUpdatingFromInspector = ref(false);
 
 const addShape = (shape: Shape) => {
-  shapes.value.push(shape);
+  shapes.value[shape.id()] = shape;
   shape.on("mousedown", function (this: Shape) {
-    shapes.value.forEach(shape => shape.select(false).resize(false));
+    Object.values(shapes.value).forEach((shape: Shape) => shape.select(false).resize(false));
     this.select(true).resize(true);
     bus.emit("select", this)
   });
+  shape.on("dragmove", function (this: Shape) {
+    // 如果是从检查器更新，不发送 update 事件
+    if (!isUpdatingFromInspector.value) {
+      bus.emit("update", this);
+    }
+  });
+  shape.on("resize", function (this: Shape) {
+    // 如果是从检查器更新，不发送 update 事件
+    if (!isUpdatingFromInspector.value) {
+      bus.emit("update", this);
+    }
+  });
 };
+
+bus.on("edit", (model: Record<string, any>) => {
+  const id = model["vector_graphics__id"];
+  if (!id) return;
+  const shape = shapes.value[id];
+  if (!shape) return;
+  // 标记这是从检查器更新，不要触发 update 事件
+  isUpdatingFromInspector.value = true;
+  UpdateShape(shape, model);
+  // 使用 setTimeout 确保更新完成后再重置标志位
+  setTimeout(() => {
+    isUpdatingFromInspector.value = false;
+  }, 0);
+});
 
 onMounted(() => {
   const canvas = SVG()
@@ -41,7 +70,7 @@ onMounted(() => {
 
 
   canvas.on("mousedown", function (this: Shape) {
-    shapes.value.forEach(shape => shape.select(false));
+    Object.values(shapes.value).forEach((shape: Shape) => shape.select(false));
   })
 
   addShape(canvas

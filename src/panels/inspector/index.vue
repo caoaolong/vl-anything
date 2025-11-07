@@ -1,20 +1,46 @@
 <template>
   <n-config-provider :theme="darkTheme">
-    <n-form label-placement="left" label-width="120px" size="small" :model="currentModel">
+    <n-form size="small" :model="currentModel">
       <n-collapse v-for="vgClass in currentView" :default-expanded-names="expandedNames">
         <n-collapse-item :title="vgClass.showName" :name="vgClass.className">
-          <n-form-item v-for="field in vgClass.props" :label="field.showName"
-            :path="vgClass.className + '__' + field.fieldName">
-            <n-button quaternary size="small" circle
-              @click="resetField(vgClass.className + '__' + field.fieldName)"
-              :disabled="ConstantMapper[vgClass.className + '__' + field.fieldName] === currentModel[vgClass.className + '__' + field.fieldName]">
-              <template #icon>
-                <ArrowClockwise16Filled />
-              </template>
-            </n-button>
-            <n-input-number v-if="field.type === 'number'"
-              v-model:value="currentModel[vgClass.className + '__' + field.fieldName]" round />
-            <n-input v-else v-model:value="currentModel[vgClass.className + '__' + field.fieldName]" round />
+          <n-form-item v-for="field in vgClass.props" :path="vgClass.className + '__' + field.fieldName">
+            <template #label>
+              <div class="inspector-field-label">
+                <span>{{ field.showName }}</span>
+                <n-button quaternary size="small" circle @click="resetField(vgClass.className + '__' + field.fieldName)"
+                  :disabled="ConstantMapper[vgClass.className + '__' + field.fieldName] === currentModel[vgClass.className + '__' + field.fieldName]">
+                  <template #icon>
+                    <ArrowClockwise16Filled />
+                  </template>
+                </n-button>
+              </div>
+            </template>
+            <div v-if="['Point'].includes(field.type)">
+              <n-grid :x-gap="12" :cols="2">
+                <n-gi>
+                  <n-input-number v-model:value="currentModel[vgClass.className + '__' + field.fieldName]['x']"
+                    :format="formatFloatValue" round />
+                </n-gi>
+                <n-gi>
+                  <n-input-number v-model:value="currentModel[vgClass.className + '__' + field.fieldName]['y']"
+                    :format="formatFloatValue" round />
+                </n-gi>
+              </n-grid>
+            </div>
+            <div v-else-if="['Size'].includes(field.type)">
+              <n-grid :x-gap="12" :cols="2">
+                <n-gi>
+                  <n-input-number v-model:value="currentModel[vgClass.className + '__' + field.fieldName]['width']"
+                    :format="formatFloatValue" round />
+                </n-gi>
+                <n-gi>
+                  <n-input-number v-model:value="currentModel[vgClass.className + '__' + field.fieldName]['height']"
+                    :format="formatFloatValue" round />
+                </n-gi>
+              </n-grid>
+            </div>
+            <n-input v-else v-model:value="currentModel[vgClass.className + '__' + field.fieldName]" round
+              :readonly="field.readonly" :disabled="field.readonly" />
           </n-form-item>
         </n-collapse-item>
       </n-collapse>
@@ -23,50 +49,76 @@
 </template>
 
 <script setup lang="ts">
-import { NCollapse, NCollapseItem, NButton, NConfigProvider, NForm, NFormItem, NInput, NInputNumber, darkTheme } from "naive-ui";
-import { ref } from "vue";
+import { NCollapse, NCollapseItem, NButton, NConfigProvider, NForm, NFormItem, NInput, NInputNumber, NGrid, NGi, darkTheme } from "naive-ui";
+import { ref, watch, reactive } from "vue";
 import { VectorGraphics, EntityProps, CreateShapeProps, FormatLabel, ConstantMapper } from "@/entites/vg";
 import { bus } from "@/utils/bus";
 import type { Shape } from "@svgdotjs/svg.js";
 import { ArrowClockwise16Filled } from "@vicons/fluent";
+import type { ShapeProps } from "@/props/inspector";
 
-interface FieldProps {
-  fieldName: string;
-  showName: string;
-  value: any;
-  type: string;
-}
-
-interface ShapeProps {
-  className: string;
-  showName: string;
-  props: Array<FieldProps>;
-}
-
+// ID <-> VectorGraphics
 const shapes = ref<Record<string, VectorGraphics>>({});
 const currentView = ref<Array<ShapeProps>>([]);
-const currentModel = ref<Record<string, any>>({});
+const currentModel = reactive<Record<string, any>>({});
 const expandedNames = ref<Array<string>>([]);
+// 标志位：用于区分是程序更新还是用户输入
+const isUpdatingFromScene = ref(false);
 
 const resetField = (path: string) => {
-  currentModel.value[path] = ConstantMapper[path];
+  currentModel[path] = ConstantMapper[path];
+}
+
+const formatFloatValue = (value: number | null): string => {
+  if (!value) return "";
+  return value.toFixed(4);
 }
 
 const addShapeProps = (shape: Shape) => {
-  var vg = CreateShapeProps(shape, shape.attr());
+  const args = shape.attr();
+  args["id"] = shape.id();
+  var vg = CreateShapeProps(shape, args);
   if (!vg) return;
   shapes.value[shape.id()] = vg;
 }
 
+const editShapeProps = (id: string, attr: Record<string, any>) => {
+  const shape = shapes.value[id];
+  if (!shape) return;
+  shape.update(attr);
+  // set current model
+  const model: Record<string, any> = {};
+  Object.keys(shape).forEach(key => {
+    model[key] = shape[key as keyof VectorGraphics];
+  });
+  // 标记这是从场景更新，不要触发 edit 事件
+  isUpdatingFromScene.value = true;
+  // 更新 reactive 对象的属性
+  Object.keys(model).forEach(key => {
+    currentModel[key] = model[key];
+  });
+  // 使用 setTimeout 确保响应式更新完成后再重置标志位
+  setTimeout(() => {
+    isUpdatingFromScene.value = false;
+  }, 0);
+}
+
 const showShapeProps = function (vg: VectorGraphics | undefined) {
   if (!vg) return;
-
   // set current model
   const model: Record<string, any> = {};
   Object.keys(vg).forEach(key => {
     model[key] = vg[key as keyof VectorGraphics];
   });
-  currentModel.value = model;
+  // 标记这是从场景更新（选择新图形），不要触发 edit 事件
+  isUpdatingFromScene.value = true;
+  // 更新 reactive 对象的属性
+  Object.keys(model).forEach(key => {
+    currentModel[key] = model[key];
+  });
+  setTimeout(() => {
+    isUpdatingFromScene.value = false;
+  }, 0);
 
   // set current view
   const props = EntityProps(vg);
@@ -84,17 +136,29 @@ const showShapeProps = function (vg: VectorGraphics | undefined) {
     Object.keys(props[className]).forEach(field => {
       if (!props[className]) return;
       const value = props[className][field];
-      entry.props.push({
+      const item = {
         fieldName: field,
-        type: typeof value,
+        type: value.constructor.name,
         showName: FormatLabel(field),
-        value: value
-      });
+        value: value,
+        readonly: false
+      }
+      if (item.fieldName === 'id') {
+        item.readonly = true
+      }
+      entry.props.push(item);
     })
     showProps.push(entry);
   })
   currentView.value = showProps;
 }
+
+watch(currentModel, (newModel) => {
+  // 只有在用户手动修改时才发送 edit 事件，程序更新时不发送
+  if (!isUpdatingFromScene.value) {
+    bus.emit("edit", newModel);
+  }
+}, { deep: true });
 
 bus.on("select", (shape: Shape) => {
   const id = shape.id()
@@ -103,14 +167,41 @@ bus.on("select", (shape: Shape) => {
   }
   showShapeProps(shapes.value[id])
 });
+
+bus.on("update", (shape: Shape) => {
+  editShapeProps(shape.id(), shape.attr());
+});
 </script>
 
 <style scoped>
 :deep(.n-collapse-item__header-main) {
-  height: 40px;
+  height: 30px;
   font-weight: bolder;
   font-size: 16px;
   user-select: none;
-  border: 1px solid rgb(34, 34, 34);
+  background-color: #001322;
+}
+
+:deep(.n-form-item-blank) {
+  max-width: 300px;
+}
+
+:deep(.n-collapse-item__content-wrapper) {
+  border: 6px solid #001322;
+  padding-left: 20px;
+}
+
+:deep(.n-form-item-label__text) {
+  width: 100%;
+}
+
+.inspector-field-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: left;
+  font-size: 14px;
+  font-weight: bold;
+  gap: 10px;
 }
 </style>
