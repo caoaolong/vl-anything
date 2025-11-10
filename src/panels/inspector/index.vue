@@ -7,7 +7,8 @@
             <template #label>
               <div class="inspector-field-label">
                 <span>{{ field.showName }}</span>
-                <n-button quaternary size="small" circle @click="resetField(vgClass.className + '__' + field.fieldName)"
+                <n-button v-if="field.fieldName !== 'id'" quaternary size="small" circle
+                  @click="resetField(vgClass.className + '__' + field.fieldName)"
                   :disabled="ConstantMapper[vgClass.className + '__' + field.fieldName] === currentModel[vgClass.className + '__' + field.fieldName]">
                   <template #icon>
                     <ArrowClockwise16Filled />
@@ -27,6 +28,11 @@
                 </n-gi>
               </n-grid>
             </div>
+            <Transform v-else-if="['Transform'].includes(field.type)"
+              :model="currentModel[vgClass.className + '__' + field.fieldName]"
+              :format-float-value="formatFloatValue" />
+            <Color v-else-if="['Color'].includes(field.type)"
+              v-model="currentModel[vgClass.className + '__' + field.fieldName]" />
             <div v-else-if="['Size'].includes(field.type)">
               <n-grid :x-gap="12" :cols="2">
                 <n-gi>
@@ -38,6 +44,22 @@
                     :format="formatFloatValue" round />
                 </n-gi>
               </n-grid>
+            </div>
+            <div v-else-if="['Radius'].includes(field.type)">
+              <n-grid :x-gap="12" :cols="2">
+                <n-gi>
+                  <n-input-number v-model:value="currentModel[vgClass.className + '__' + field.fieldName]['rx']"
+                    :format="formatFloatValue" round />
+                </n-gi>
+                <n-gi>
+                  <n-input-number v-model:value="currentModel[vgClass.className + '__' + field.fieldName]['ry']"
+                    :format="formatFloatValue" round />
+                </n-gi>
+              </n-grid>
+            </div>
+            <div v-else-if="['Number'].includes(field.type)">
+              <n-input-number v-model:value="currentModel[vgClass.className + '__' + field.fieldName]"
+                :format="formatFloatValue" round />
             </div>
             <n-input v-else v-model:value="currentModel[vgClass.className + '__' + field.fieldName]" round
               :readonly="field.readonly" :disabled="field.readonly" />
@@ -56,6 +78,8 @@ import { bus } from "@/utils/bus";
 import type { Shape } from "@svgdotjs/svg.js";
 import { ArrowClockwise16Filled } from "@vicons/fluent";
 import type { ShapeProps } from "@/props/inspector";
+import Transform from "@/components/inspector/transform/index.vue";
+import Color from "@/components/inspector/color/index.vue";
 
 // ID <-> VectorGraphics
 const shapes = ref<Record<string, VectorGraphics>>({});
@@ -70,13 +94,14 @@ const resetField = (path: string) => {
 }
 
 const formatFloatValue = (value: number | null): string => {
-  if (!value) return "";
+  if (!value) return "0";
   return value.toFixed(4);
 }
 
 const addShapeProps = (shape: Shape) => {
   const args = shape.attr();
   args["id"] = shape.id();
+  args["transform"] = shape.transform();
   var vg = CreateShapeProps(shape, args);
   if (!vg) return;
   shapes.value[shape.id()] = vg;
@@ -90,6 +115,9 @@ const editShapeProps = (id: string, attr: Record<string, any>) => {
   const model: Record<string, any> = {};
   Object.keys(shape).forEach(key => {
     model[key] = shape[key as keyof VectorGraphics];
+    if ("Color" === model[key].constructor.name) {
+      model[key] = model[key].toHex();
+    }
   });
   // 标记这是从场景更新，不要触发 edit 事件
   isUpdatingFromScene.value = true;
@@ -109,6 +137,9 @@ const showShapeProps = function (vg: VectorGraphics | undefined) {
   const model: Record<string, any> = {};
   Object.keys(vg).forEach(key => {
     model[key] = vg[key as keyof VectorGraphics];
+    if ("Color" === model[key].constructor.name) {
+      model[key] = model[key].toHex();
+    }
   });
   // 标记这是从场景更新（选择新图形），不要触发 edit 事件
   isUpdatingFromScene.value = true;
@@ -132,10 +163,10 @@ const showShapeProps = function (vg: VectorGraphics | undefined) {
       showName: FormatLabel(className),
       props: []
     }
-    if (!props[className]) return;
-    Object.keys(props[className]).forEach(field => {
-      if (!props[className]) return;
-      const value = props[className][field];
+    const classProps = props[className];
+    if (!classProps) return;
+    Object.keys(classProps).forEach(field => {
+      const value = classProps[field];
       const item = {
         fieldName: field,
         type: value.constructor.name,
@@ -169,7 +200,10 @@ bus.on("select", (shape: Shape) => {
 });
 
 bus.on("update", (shape: Shape) => {
-  editShapeProps(shape.id(), shape.attr());
+  const args = shape.attr();
+  args["id"] = shape.id();
+  args["transform"] = shape.transform();
+  editShapeProps(shape.id(), args);
 });
 </script>
 
@@ -203,5 +237,9 @@ bus.on("update", (shape: Shape) => {
   font-size: 14px;
   font-weight: bold;
   gap: 10px;
+}
+
+.vl-inspector-subtitle {
+  text-align: left;
 }
 </style>

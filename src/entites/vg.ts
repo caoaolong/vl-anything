@@ -1,11 +1,16 @@
 import { VectorGraphics } from "./vector_graphics";
-import { Rect, Size } from "./rect";
-import { Point } from "@svgdotjs/svg.js";
-import type { Shape } from "@svgdotjs/svg.js";
+import { Rect, Size, Radius } from "./rect";
+import { Point, Color } from "@svgdotjs/svg.js";
+import type { Shape, Rect as RectShape } from "@svgdotjs/svg.js";
+import { Transform } from "./vector_graphics";
 
 const ConstantMapper: Record<string, any> = {
+	"vector_graphics__transform": new Transform(new Point(1, 1), 0, new Point(0, 0)),
 	"vector_graphics__position": new Point(0, 0),
-	"rect__size": new Size(50, 50)
+	"vector_graphics__fill": new Color(255, 255, 255),
+	"vector_graphics__stroke": new Color(0, 0, 0),
+	"rect__size": new Size(50, 50),
+	"rect__radius": new Radius(0, 0)
 }
 
 const shapeMapper: Record<string, (arg: any) => VectorGraphics> = {
@@ -51,17 +56,31 @@ function EntityProps(vg: VectorGraphics): Record<string, Record<string, any>> {
 				result[className] = {};
 			}
 			// const displayFieldName = formatLabel(field);
-			result[className][field] = vg[prop as keyof VectorGraphics];
+			result[className]![field] = vg[prop as keyof VectorGraphics];
 		}
 	}
 	return result;
 }
 
 function UpdateShape(shape: Shape, model: Record<string, any>) {
+	const transform: Transform = model["vector_graphics__transform"];
 	const position: Point = model["vector_graphics__position"];
 	const size: Size = model["rect__size"];
+	const radius: Radius = model["rect__radius"];
+	const fill: string = model["vector_graphics__fill"];
+	const stroke: string = model["vector_graphics__stroke"];
 	if (position) shape.move(position.x, position.y);
 	if (size) shape.size(size.width, size.height);
+	if (radius) (shape as RectShape).radius(radius.rx, radius.ry);
+	if (fill) shape.fill(fill);
+	if (stroke) shape.stroke(stroke);
+	if (transform) shape.transform({
+		scaleX: transform.scale.x,
+		scaleY: transform.scale.y,
+		rotate: transform.rotate,
+		translateX: transform.translate.x,
+		translateY: transform.translate.y
+	});
 }
 
-export { VectorGraphics, Rect, Size, EntityProps, FormatLabel, FormatClassName, CreateShapeProps, ConstantMapper, UpdateShape };
+export { VectorGraphics, Rect, Size, Radius, EntityProps, FormatLabel, FormatClassName, CreateShapeProps, ConstantMapper, UpdateShape };

@@ -23,7 +23,7 @@ const addShape = (shape: Shape) => {
   shape.on("mousedown", function (this: Shape) {
     Object.values(shapes.value).forEach((shape: Shape) => shape.select(false).resize(false));
     this.select(true).resize(true);
-    bus.emit("select", this)
+    bus.emit("select", this);
   });
   shape.on("dragmove", function (this: Shape) {
     // 如果是从检查器更新，不发送 update 事件
