@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { SVG } from "@svgdotjs/svg.js";
-import type { Shape } from "@svgdotjs/svg.js";
+import { Shape, G } from "@svgdotjs/svg.js";
 import "@svgdotjs/svg.resize.js";
 import "@svgdotjs/svg.select.js";
 import "@svgdotjs/svg.draggable.js";
@@ -13,28 +13,42 @@ import { onMounted, ref } from "vue";
 import { bus } from "@/utils/bus";
 import { showAxis, showView } from "@/utils/scene";
 import { UpdateShape } from "@/entites/vg";
+import { Text } from "@svgdotjs/svg.js";
 
 const shapes = ref<Record<string, Shape>>({});
+const labels = ref<Record<string, Text>>({});
 // 标志位：用于防止程序更新时触发拖拽事件
 const isUpdatingFromInspector = ref(false);
 
-const addShape = (shape: Shape) => {
+const updateLabel = (shape: Shape) => {
+  const label = labels.value[shape.id()];
+  if (!label) return;
+  label.cx(shape.cx()).cy(shape.cy());
+}
+
+const addShape = (g: G, shape: Shape) => {
   shapes.value[shape.id()] = shape;
+  const label = g.text("").fill("#fff");
+  label.cx(shape.cx()).cy(shape.cy());
+  labels.value[shape.id()] = label;
   shape.on("mousedown", function (this: Shape) {
     Object.values(shapes.value).forEach((shape: Shape) => shape.select(false).resize(false));
     this.select(true).resize(true);
-    bus.emit("select", this);
+    console.log(labels.value[this.id()]);
+    bus.emit("select", { shape: this, label: labels.value[this.id()] });
   });
   shape.on("dragmove", function (this: Shape) {
+    updateLabel(this);
     // 如果是从检查器更新，不发送 update 事件
     if (!isUpdatingFromInspector.value) {
-      bus.emit("update", this);
+      bus.emit("update", { shape: this, label: labels.value[this.id()] });
     }
   });
   shape.on("resize", function (this: Shape) {
+    updateLabel(this);
     // 如果是从检查器更新，不发送 update 事件
     if (!isUpdatingFromInspector.value) {
-      bus.emit("update", this);
+      bus.emit("update", { shape: this, label: labels.value[this.id()] });
     }
   });
 };
@@ -44,9 +58,10 @@ bus.on("edit", (model: Record<string, any>) => {
   if (!id) return;
   const shape = shapes.value[id];
   if (!shape) return;
+  const label = labels.value[id];
   // 标记这是从检查器更新，不要触发 update 事件
   isUpdatingFromInspector.value = true;
-  UpdateShape(shape, model);
+  UpdateShape(shape, label, model);
   // 使用 setTimeout 确保更新完成后再重置标志位
   setTimeout(() => {
     isUpdatingFromInspector.value = false;
@@ -63,6 +78,8 @@ onMounted(() => {
       panButton: 1,
     });
 
+  // canvas.text("Label");
+
   // 初始绘制网格
   showAxis(canvas);
   // 绘制视图边框
@@ -73,12 +90,14 @@ onMounted(() => {
     Object.values(shapes.value).forEach((shape: Shape) => shape.select(false));
   })
 
-  addShape(canvas
+  const g1 = canvas.group();
+  addShape(g1, g1
     .rect(50, 50)
     .fill("#0f6")
     .draggable())
 
-  addShape(canvas
+  const g2 = canvas.group();
+  addShape(g2, g2
     .rect(50, 50)
     .move(100, 100)
     .fill("#f96")

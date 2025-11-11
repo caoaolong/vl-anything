@@ -59,6 +59,12 @@ const loadLayout = () => {
     component: "ScenePanel",
     title: "Scene"
   });
+
+  api.value?.addPanel({
+    id: "operator",
+    component: "OperatorPanel",
+    title: "Operator"
+  });
 };
 
 const onReady = (event: DockviewReadyEvent) => {
@@ -69,7 +75,7 @@ const onReady = (event: DockviewReadyEvent) => {
 
 <template>
   <n-config-provider :theme="darkTheme" class="app-container">
-    <n-menu :options="menuItems" mode="horizontal"></n-menu>
+    <n-menu :options="menuItems" mode="horizontal" size="small"></n-menu>
     <n-flex size="small">
       <n-button-group size="small">
         <n-button quaternary v-for="item in alignItems" :render-icon="item.icon">
@@ -94,5 +100,9 @@ const onReady = (event: DockviewReadyEvent) => {
 .app-container {
   width: 100%;
   height: 100%;
+}
+
+:deep(.n-menu.n-menu--horizontal .n-menu-item-content) {
+  padding: 2px 10px;
 }
 </style>

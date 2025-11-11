@@ -13,12 +13,14 @@ export class Transform {
 
 export class VectorGraphics {
 	vector_graphics__id: string = "";
+	vector_graphics__label: string = "";
 	vector_graphics__transform: Transform = new Transform(new Point(1, 1), 0, new Point(0, 0));
 	vector_graphics__position: Point = new Point(0, 0);
 	vector_graphics__fill: Color = new Color(255, 255, 255);
 	vector_graphics__stroke: Color = new Color(0, 0, 0);
 	constructor(arg: any) {
 		this.vector_graphics__id = arg.id;
+		this.vector_graphics__label = arg.label || "";
 		this.vector_graphics__position = new Point(arg.x || 0, arg.y || 0);
 		if (arg.fill !== undefined) {
 			this.vector_graphics__fill = new Color(arg.fill);
@@ -32,6 +34,9 @@ export class VectorGraphics {
 	}
 
 	update(attr: Record<string, any>) {
+		if (attr.label !== undefined) {
+			this.vector_graphics__label = attr.label;
+		}
 		if (attr.x !== undefined) {
 			this.vector_graphics__position.x = attr.x;
 		}

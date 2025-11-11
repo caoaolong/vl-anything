@@ -3,8 +3,10 @@ import { Rect, Size, Radius } from "./rect";
 import { Point, Color } from "@svgdotjs/svg.js";
 import type { Shape, Rect as RectShape } from "@svgdotjs/svg.js";
 import { Transform } from "./vector_graphics";
+import type { Text } from "@svgdotjs/svg.js";
 
 const ConstantMapper: Record<string, any> = {
+	"vector_graphics__label": "",
 	"vector_graphics__transform": new Transform(new Point(1, 1), 0, new Point(0, 0)),
 	"vector_graphics__position": new Point(0, 0),
 	"vector_graphics__fill": new Color(255, 255, 255),
@@ -62,13 +64,14 @@ function EntityProps(vg: VectorGraphics): Record<string, Record<string, any>> {
 	return result;
 }
 
-function UpdateShape(shape: Shape, model: Record<string, any>) {
+function UpdateShape(shape: Shape, label: Text, model: Record<string, any>) {
 	const transform: Transform = model["vector_graphics__transform"];
 	const position: Point = model["vector_graphics__position"];
 	const size: Size = model["rect__size"];
 	const radius: Radius = model["rect__radius"];
 	const fill: string = model["vector_graphics__fill"];
 	const stroke: string = model["vector_graphics__stroke"];
+	if (label) label.text(model["vector_graphics__label"]).cx(shape.cx()).cy(shape.cy());
 	if (position) shape.move(position.x, position.y);
 	if (size) shape.size(size.width, size.height);
 	if (radius) (shape as RectShape).radius(radius.rx, radius.ry);

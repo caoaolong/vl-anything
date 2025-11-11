@@ -74,8 +74,8 @@
 import { NCollapse, NCollapseItem, NButton, NConfigProvider, NForm, NFormItem, NInput, NInputNumber, NGrid, NGi, darkTheme } from "naive-ui";
 import { ref, watch, reactive } from "vue";
 import { VectorGraphics, EntityProps, CreateShapeProps, FormatLabel, ConstantMapper } from "@/entites/vg";
-import { bus } from "@/utils/bus";
-import type { Shape } from "@svgdotjs/svg.js";
+import { bus, ShapeEvent } from "@/utils/bus";
+import type { Shape, Text } from "@svgdotjs/svg.js";
 import { ArrowClockwise16Filled } from "@vicons/fluent";
 import type { ShapeProps } from "@/props/inspector";
 import Transform from "@/components/inspector/transform/index.vue";
@@ -98,10 +98,12 @@ const formatFloatValue = (value: number | null): string => {
   return value.toFixed(4);
 }
 
-const addShapeProps = (shape: Shape) => {
+const addShapeProps = (shape: Shape, label: Text) => {
   const args = shape.attr();
   args["id"] = shape.id();
   args["transform"] = shape.transform();
+  args["label"] = label.text();
+  console.log(args);
   var vg = CreateShapeProps(shape, args);
   if (!vg) return;
   shapes.value[shape.id()] = vg;
@@ -191,15 +193,17 @@ watch(currentModel, (newModel) => {
   }
 }, { deep: true });
 
-bus.on("select", (shape: Shape) => {
+bus.on("select", (event: ShapeEvent) => {
+  const { shape, label } = event;
   const id = shape.id()
   if (!Object.keys(shapes.value).includes(id)) {
-    addShapeProps(shape);
+    addShapeProps(shape, label);
   }
   showShapeProps(shapes.value[id])
 });
 
-bus.on("update", (shape: Shape) => {
+bus.on("update", (event: ShapeEvent) => {
+  const { shape } = event;
   const args = shape.attr();
   args["id"] = shape.id();
   args["transform"] = shape.transform();
