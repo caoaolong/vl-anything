@@ -14,7 +14,6 @@ import { bus } from "@/utils/bus";
 import { showAxis, showView } from "@/utils/scene";
 import { UpdateShape } from "@/entites/vg";
 import { Text } from "@svgdotjs/svg.js";
-import { gsap } from "gsap";
 
 const shapes = ref<Record<string, Shape>>({});
 const labels = ref<Record<string, Text>>({});
@@ -37,7 +36,6 @@ const addShape = (g: G, shape: Shape) => {
       shape.select(false).resize(false)
     );
     this.select(true).resize(true);
-    console.log(labels.value[this.id()]);
     bus.emit("select", { shape: this, label: labels.value[this.id()] });
   });
   shape.on("dragmove", function (this: Shape) {

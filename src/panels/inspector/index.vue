@@ -103,7 +103,6 @@ const addShapeProps = (shape: Shape, label: Text) => {
   args["id"] = shape.id();
   args["transform"] = shape.transform();
   args["label"] = label.text();
-  console.log(args);
   var vg = CreateShapeProps(shape, args);
   if (!vg) return;
   shapes.value[shape.id()] = vg;
