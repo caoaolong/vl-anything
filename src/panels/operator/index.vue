@@ -1,13 +1,5 @@
-<template>
-  <div>
-    <h1>Operator</h1>
-  </div>
-</template>
+<template></template>
 
-<script setup lang="ts">
+<script setup lang="ts"></script>
 
-</script>
-
-<style scoped>
-
-</style>
+<style scoped></style>

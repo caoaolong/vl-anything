@@ -14,6 +14,7 @@ import { bus } from "@/utils/bus";
 import { showAxis, showView } from "@/utils/scene";
 import { UpdateShape } from "@/entites/vg";
 import { Text } from "@svgdotjs/svg.js";
+import { gsap } from "gsap";
 
 const shapes = ref<Record<string, Shape>>({});
 const labels = ref<Record<string, Text>>({});
@@ -24,7 +25,7 @@ const updateLabel = (shape: Shape) => {
   const label = labels.value[shape.id()];
   if (!label) return;
   label.cx(shape.cx()).cy(shape.cy());
-}
+};
 
 const addShape = (g: G, shape: Shape) => {
   shapes.value[shape.id()] = shape;
@@ -32,7 +33,9 @@ const addShape = (g: G, shape: Shape) => {
   label.cx(shape.cx()).cy(shape.cy());
   labels.value[shape.id()] = label;
   shape.on("mousedown", function (this: Shape) {
-    Object.values(shapes.value).forEach((shape: Shape) => shape.select(false).resize(false));
+    Object.values(shapes.value).forEach((shape: Shape) =>
+      shape.select(false).resize(false)
+    );
     this.select(true).resize(true);
     console.log(labels.value[this.id()]);
     bus.emit("select", { shape: this, label: labels.value[this.id()] });
@@ -85,23 +88,28 @@ onMounted(() => {
   // 绘制视图边框
   showView(canvas, "cyan", 0.5);
 
-
   canvas.on("mousedown", function (this: Shape) {
     Object.values(shapes.value).forEach((shape: Shape) => shape.select(false));
-  })
+  });
 
   const g1 = canvas.group();
-  addShape(g1, g1
-    .rect(50, 50)
-    .fill("#0f6")
-    .draggable())
+  addShape(g1, g1.rect(50, 50).fill("#0f6").draggable());
+
+  //   gsap.to(g1, {
+  //     duration: 2,
+  //     delay: 1,
+  //     repeat: -1,
+  //     yoyo: false,
+  //     ease: "power1.inOut",
+  //     onUpdate: () => {
+  //       const shape = shapes.value[g1.children()[0].id()];
+  //       updateLabel(shape);
+  //     },
+  //     x: 1,
+  //   });
 
   const g2 = canvas.group();
-  addShape(g2, g2
-    .rect(50, 50)
-    .move(100, 100)
-    .fill("#f96")
-    .draggable())
+  addShape(g2, g2.rect(50, 50).move(100, 100).fill("#f96").draggable());
 });
 </script>
 

@@ -11,6 +11,12 @@ export class Transform {
 	}
 }
 
+export class Action {
+	frame: string = "";
+	name: string = "";
+	label: string = "";
+}
+
 export class VectorGraphics {
 	vector_graphics__id: string = "";
 	vector_graphics__label: string = "";
@@ -18,6 +24,7 @@ export class VectorGraphics {
 	vector_graphics__position: Point = new Point(0, 0);
 	vector_graphics__fill: Color = new Color(255, 255, 255);
 	vector_graphics__stroke: Color = new Color(0, 0, 0);
+	vactor_graphics__actions: Action[] = [];
 	constructor(arg: any) {
 		this.vector_graphics__id = arg.id;
 		this.vector_graphics__label = arg.label || "";
