@@ -193,7 +193,12 @@ watch(currentModel, (newModel) => {
 }, { deep: true });
 
 bus.on("select", (event: ShapeEvent) => {
-  const { shape, label } = event;
+  const { node } = event;
+  if (!node || !node.shape || !node.label) return;
+  const shape = node.shape;
+  if (!shape) return;
+  const label = node.label;
+  if (!label) return;
   const id = shape.id()
   if (!Object.keys(shapes.value).includes(id)) {
     addShapeProps(shape, label);
@@ -202,11 +207,9 @@ bus.on("select", (event: ShapeEvent) => {
 });
 
 bus.on("update", (event: ShapeEvent) => {
-  const { shape } = event;
-  const args = shape.attr();
-  args["id"] = shape.id();
-  args["transform"] = shape.transform();
-  editShapeProps(shape.id(), args);
+  const { node } = event;
+  if (!node || !node.shape) return;
+  editShapeProps(node.shape.id(), node.shape.attr());
 });
 </script>
 

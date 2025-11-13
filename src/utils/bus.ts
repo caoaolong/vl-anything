@@ -1,9 +1,8 @@
 import mitt from 'mitt'
-import type { Shape, Text } from '@svgdotjs/svg.js'
+import { ShapeNode } from "@/utils/scene";
 
 export interface ShapeEvent {
-  shape: Shape;
-  label: Text;
+  node: ShapeNode | null;
 }
 
 // 定义事件类型
@@ -11,6 +10,7 @@ type Events = {
   select: ShapeEvent;
   update: ShapeEvent;
   edit: Record<string, any>;
+  outline: ShapeEvent;
 }
 
 export const bus = mitt<Events>();

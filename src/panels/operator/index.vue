@@ -41,7 +41,9 @@ import { ref } from 'vue';
 const currentShape = ref<Shape | null>(null);
 
 bus.on("select", (event: ShapeEvent) => {
-  currentShape.value = event.shape;
+  const { node } = event;
+  if (!node) return;
+  currentShape.value = node.shape;
 })
 </script>
 

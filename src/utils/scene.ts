@@ -1,4 +1,24 @@
 import type { Svg } from "@svgdotjs/svg.js";
+import { Text } from "@svgdotjs/svg.js";
+import { Shape } from "@svgdotjs/svg.js";
+
+export class ShapeNode {
+  shape: Shape | null = null;
+  label: Text | null = null;
+  children: ShapeNode[] = [];
+  constructor(shape: Shape | null, label: Text | null) {
+    this.shape = shape;
+    this.label = label;
+  }
+
+  addChild(child: ShapeNode) {
+    this.children.push(child);
+  }
+
+  removeChild(child: ShapeNode) {
+    this.children = this.children.filter(c => c !== child);
+  }
+}
 
 /**
  * 清除现有的网格

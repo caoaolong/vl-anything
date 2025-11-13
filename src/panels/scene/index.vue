@@ -1,5 +1,9 @@
 <template>
-  <div id="svg-container"></div>
+  <n-tabs v-model:value="activeTab" type="card" addable closable @close="handleClose" @add="handleAdd" size="small">
+    <n-tab-pane v-for="panel in scenePanels" :key="panel" :name="panel">
+      <div :id="'svg-container-' + panel"></div>
+    </n-tab-pane>
+  </n-tabs>
 </template>
 
 <script setup lang="ts">
@@ -11,45 +15,70 @@ import "@svgdotjs/svg.draggable.js";
 import "@svgdotjs/svg.panzoom.js";
 import { onMounted, ref } from "vue";
 import { bus } from "@/utils/bus";
-import { showAxis, showView } from "@/utils/scene";
+import { showAxis, showView, ShapeNode } from "@/utils/scene";
 import { UpdateShape } from "@/entites/vg";
-import { Text } from "@svgdotjs/svg.js";
+import type { Text } from "@svgdotjs/svg.js";
+import { NTabs, NTabPane } from "naive-ui";
 
-const shapes = ref<Record<string, Shape>>({});
-const labels = ref<Record<string, Text>>({});
+const activeTab = ref<string>('Scene1');
+const scenePanels = ref<string[]>(['Scene1']);
+
+const root = ref<ShapeNode | null>(new ShapeNode(null, null));
+const nodes = ref<Record<string, ShapeNode>>({});
+
+const handleClose = (name: string) => {
+  console.log(name)
+};
+
+const handleAdd = () => {
+  console.log('add')
+};
+
+const getNode = (shape: Shape, label: Text | null) => {
+  const id = shape.id();
+  if (!nodes.value[id]) {
+    const node = new ShapeNode(shape, label);
+    root.value?.addChild(node);
+    bus.emit("outline", { node: root.value });
+    nodes.value[id] = node;
+  }
+  return nodes.value[id];
+};
+
 // 标志位：用于防止程序更新时触发拖拽事件
 const isUpdatingFromInspector = ref(false);
 
 const updateLabel = (shape: Shape) => {
-  const label = labels.value[shape.id()];
+  const node = getNode(shape, null);
+  const label = node.label;
   if (!label) return;
   label.cx(shape.cx()).cy(shape.cy());
 };
 
 const addShape = (g: G, shape: Shape) => {
-  shapes.value[shape.id()] = shape;
-  const label = g.text("").fill("#fff");
-  label.cx(shape.cx()).cy(shape.cy());
-  labels.value[shape.id()] = label;
+  const node = getNode(shape, null);
+  node.shape = shape;
+  node.label = g.text("").fill("#fff").cx(shape.cx()).cy(shape.cy());
+
   shape.on("mousedown", function (this: Shape) {
-    Object.values(shapes.value).forEach((shape: Shape) =>
-      shape.select(false).resize(false)
+    Object.values(nodes.value).forEach((node: ShapeNode) =>
+      node.shape?.select(false).resize(false)
     );
     this.select(true).resize(true);
-    bus.emit("select", { shape: this, label: labels.value[this.id()] });
+    bus.emit("select", { node: getNode(this, null) });
   });
   shape.on("dragmove", function (this: Shape) {
     updateLabel(this);
     // 如果是从检查器更新，不发送 update 事件
     if (!isUpdatingFromInspector.value) {
-      bus.emit("update", { shape: this, label: labels.value[this.id()] });
+      bus.emit("update", { node: getNode(this, null) });
     }
   });
   shape.on("resize", function (this: Shape) {
     updateLabel(this);
     // 如果是从检查器更新，不发送 update 事件
     if (!isUpdatingFromInspector.value) {
-      bus.emit("update", { shape: this, label: labels.value[this.id()] });
+      bus.emit("update", { node: getNode(this, null) });
     }
   });
 };
@@ -57,12 +86,11 @@ const addShape = (g: G, shape: Shape) => {
 bus.on("edit", (model: Record<string, any>) => {
   const id = model["vector_graphics__id"];
   if (!id) return;
-  const shape = shapes.value[id];
-  if (!shape) return;
-  const label = labels.value[id];
+  const node = nodes.value[id];
+  if (!node || !node.shape || !node.label) return;
   // 标记这是从检查器更新，不要触发 update 事件
   isUpdatingFromInspector.value = true;
-  UpdateShape(shape, label, model);
+  UpdateShape(node.shape, node.label, model);
   // 使用 setTimeout 确保更新完成后再重置标志位
   setTimeout(() => {
     isUpdatingFromInspector.value = false;
@@ -71,40 +99,24 @@ bus.on("edit", (model: Record<string, any>) => {
 
 onMounted(() => {
   const canvas = SVG()
-    .addTo("#svg-container")
+    .addTo("#svg-container-Scene1")
     .size("100%", "100%")
     .viewbox(0, 0, 600, 600)
     .panZoom({
       zoomFactor: 0.1,
       panButton: 1,
     });
-
-  // canvas.text("Label");
-
   // 初始绘制网格
   showAxis(canvas);
   // 绘制视图边框
   showView(canvas, "cyan", 0.5);
 
   canvas.on("mousedown", function (this: Shape) {
-    Object.values(shapes.value).forEach((shape: Shape) => shape.select(false));
+    Object.values(nodes.value).forEach((node: ShapeNode) => node.shape?.select(false));
   });
 
   const g1 = canvas.group();
   addShape(g1, g1.rect(50, 50).fill("#0f6").draggable());
-
-  //   gsap.to(g1, {
-  //     duration: 2,
-  //     delay: 1,
-  //     repeat: -1,
-  //     yoyo: false,
-  //     ease: "power1.inOut",
-  //     onUpdate: () => {
-  //       const shape = shapes.value[g1.children()[0].id()];
-  //       updateLabel(shape);
-  //     },
-  //     x: 1,
-  //   });
 
   const g2 = canvas.group();
   addShape(g2, g2.rect(50, 50).move(100, 100).fill("#f96").draggable());

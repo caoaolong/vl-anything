@@ -65,13 +65,19 @@ const loadLayout = () => {
   api.value?.addPanel({
     id: "scene",
     component: "ScenePanel",
-    title: "Scene",
+    title: "Scene"
   });
 
   api.value?.addPanel({
     id: "operator",
     component: "OperatorPanel",
     title: "Operator",
+  });
+
+  api.value?.addPanel({
+    id: "outline",
+    component: "OutlinePanel",
+    title: "Outline",
   });
 };
 
@@ -95,7 +101,9 @@ const onReady = (event: DockviewReadyEvent) => {
         </n-button>
       </n-button-group>
     </n-flex>
-    <DockviewVue @ready="onReady" class="dockview" :theme="theme"></DockviewVue>
+    <DockviewVue 
+    @ready="onReady" class="dockview" :theme="theme"
+    ></DockviewVue>
   </n-config-provider>
 </template>
 
