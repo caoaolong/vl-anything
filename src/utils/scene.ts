@@ -1,22 +1,39 @@
 import type { Svg } from "@svgdotjs/svg.js";
+import { G } from "@svgdotjs/svg.js";
 import { Text } from "@svgdotjs/svg.js";
 import { Shape } from "@svgdotjs/svg.js";
 
 export class ShapeNode {
-  shape: Shape | null = null;
-  label: Text | null = null;
+  id: string;
+  scene: boolean = false;
+  shape?: Shape | G | null = null;
+  label?: Text | null = null;
   children: ShapeNode[] = [];
-  constructor(shape: Shape | null, label: Text | null) {
+  constructor(id: string, shape: Shape | G | null = null, label: Text | null = null, scene: boolean = false) {
+    this.id = id;
     this.shape = shape;
     this.label = label;
+    this.scene = scene;
   }
 
   addChild(child: ShapeNode) {
     this.children.push(child);
   }
 
+  getChild(id: string) {
+    return this.children.find(c => c.id === id) || this.children.find(c => c.shape?.id() === id) || this.children.find(c => c.label?.text() === id);
+  }
+
   removeChild(child: ShapeNode) {
     this.children = this.children.filter(c => c !== child);
+  }
+
+  static fromGroup(g: G, shape: Shape, label: Text | null) {
+    const node = new ShapeNode(g.id(), shape, label);
+    node.id = g.id();
+    node.shape = shape;
+    node.label = label;
+    return node;
   }
 }
 

@@ -1,13 +1,21 @@
 <template>
-    <n-tree :data="treeData" />
+  <n-tree block-line draggable :data="treeData" :node-props="nodeProps" />
 </template>
 
 <script setup lang="ts">
 import { bus, ShapeEvent } from "@/utils/bus";
-import { NTree } from "naive-ui";
-import { ref } from 'vue';
-import type { TreeOption } from 'naive-ui';
+import { NTree, createDiscreteApi, darkTheme, lightTheme, useOsTheme } from "naive-ui";
+import { computed, ref } from "vue";
+import type { TreeOption, ConfigProviderProps } from "naive-ui";
 import type { ShapeNode } from "@/utils/scene";
+
+const theme = useOsTheme();
+const configProviderPropsRef = computed<ConfigProviderProps>(() => ({
+  theme: theme.value === 'light' ? lightTheme : darkTheme
+}))
+const { message } = createDiscreteApi(["message"], {
+  configProviderProps: configProviderPropsRef.value
+});
 
 const treeData = ref<TreeOption[]>([]);
 
@@ -17,15 +25,19 @@ const treeData = ref<TreeOption[]>([]);
  * @returns TreeOption 对象
  */
 function convertNodeToTreeOption(node: ShapeNode): TreeOption {
-  // 获取节点标签文本，优先使用 label，其次使用 shape 的 id
-  const label = node.label?.text() || node.shape?.id() || '未命名节点';
-  
-  // 使用 shape 的 id 作为 key，如果没有则生成一个
-  const key = node.shape?.id() || `node-${Date.now()}-${Math.random()}`;
-  
   const treeOption: TreeOption = {
-    key,
-    label,
+    key: node.id,
+    label: node.id,
+    children: [
+      {
+        key: node.shape?.id(),
+        label: node.shape?.id()
+      },
+      {
+        key: node.label?.id(),
+        label: node.label?.id()
+      }
+    ]
   };
 
   // 递归转换子节点
@@ -36,9 +48,18 @@ function convertNodeToTreeOption(node: ShapeNode): TreeOption {
   return treeOption;
 }
 
+const nodeProps = ({ option }: { option: TreeOption }) => {
+  return {
+    onClick() {
+      bus.emit("outlineSelect", option.label || "");
+      message.info(option.label as string);
+    }
+  };
+};
+
 bus.on("outline", (event: ShapeEvent) => {
   const { node } = event;
-  if (node) {
+  if (node && node.scene) {
     // 将 ShapeNode 转换为 TreeOption 并更新 treeData
     treeData.value = [convertNodeToTreeOption(node)];
   } else {
@@ -48,4 +69,7 @@ bus.on("outline", (event: ShapeEvent) => {
 </script>
 
 <style scoped>
+:deep(.n-tree-node-content) {
+  text-align: left;
+}
 </style>

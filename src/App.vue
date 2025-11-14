@@ -8,7 +8,7 @@ import {
   NFlex,
   NButton,
   NButtonGroup,
-  NDivider,
+  NDivider
 } from "naive-ui";
 import type { DockviewApi, DockviewReadyEvent, DockviewTheme } from "dockview-vue";
 import { alignItems, shapeItems } from "@/utils/tools";
@@ -101,9 +101,7 @@ const onReady = (event: DockviewReadyEvent) => {
         </n-button>
       </n-button-group>
     </n-flex>
-    <DockviewVue 
-    @ready="onReady" class="dockview" :theme="theme"
-    ></DockviewVue>
+    <DockviewVue @ready="onReady" class="dockview" :theme="theme"></DockviewVue>
   </n-config-provider>
 </template>
 

@@ -23,62 +23,62 @@ import { NTabs, NTabPane } from "naive-ui";
 const activeTab = ref<string>('Scene1');
 const scenePanels = ref<string[]>(['Scene1']);
 
-const root = ref<ShapeNode | null>(new ShapeNode(null, null));
-const nodes = ref<Record<string, ShapeNode>>({});
+const root = ref<ShapeNode | null>(new ShapeNode("Scene1", null, null, true));
 
 const handleClose = (name: string) => {
-  console.log(name)
+  scenePanels.value = scenePanels.value.filter(panel => panel !== name);
 };
 
 const handleAdd = () => {
-  console.log('add')
+  scenePanels.value.push('Scene' + (scenePanels.value.length + 1));
 };
 
-const getNode = (shape: Shape, label: Text | null) => {
-  const id = shape.id();
-  if (!nodes.value[id]) {
-    const node = new ShapeNode(shape, label);
-    root.value?.addChild(node);
-    bus.emit("outline", { node: root.value });
-    nodes.value[id] = node;
-  }
-  return nodes.value[id];
-};
+const createNode = (g: G, shape: Shape, label: Text | null) => {
+  console.log(shape.cx(), shape.cy());
+  label?.cx(shape.cx()).cy(shape.cy());
+  const node = ShapeNode.fromGroup(g, shape, label);
+  root.value?.addChild(node);
+  bus.emit("outline", { node: root.value });
+  return node;
+}
 
 // 标志位：用于防止程序更新时触发拖拽事件
 const isUpdatingFromInspector = ref(false);
 
 const updateLabel = (shape: Shape) => {
-  const node = getNode(shape, null);
+  const node = root.value?.getChild(shape.id());
+  if (!node) return;
   const label = node.label;
   if (!label) return;
   label.cx(shape.cx()).cy(shape.cy());
 };
 
-const addShape = (g: G, shape: Shape) => {
-  const node = getNode(shape, null);
-  node.shape = shape;
-  node.label = g.text("").fill("#fff").cx(shape.cx()).cy(shape.cy());
+const changeSelect = (shape: Shape) => {
+  root.value?.children.forEach((node: ShapeNode) =>
+    node.shape?.select(false).resize(false)
+  );
+  shape.select(true).resize(true);
+}
+
+const addShape = (g: G, shape: Shape, label: Text | null) => {
+  const node = createNode(g, shape, label);
 
   shape.on("mousedown", function (this: Shape) {
-    Object.values(nodes.value).forEach((node: ShapeNode) =>
-      node.shape?.select(false).resize(false)
-    );
-    this.select(true).resize(true);
-    bus.emit("select", { node: getNode(this, null) });
+    changeSelect(this);
+    bus.emit("select", { node });
   });
   shape.on("dragmove", function (this: Shape) {
     updateLabel(this);
     // 如果是从检查器更新，不发送 update 事件
     if (!isUpdatingFromInspector.value) {
-      bus.emit("update", { node: getNode(this, null) });
+      bus.emit("update", { node });
     }
   });
   shape.on("resize", function (this: Shape) {
     updateLabel(this);
     // 如果是从检查器更新，不发送 update 事件
     if (!isUpdatingFromInspector.value) {
-      bus.emit("update", { node: getNode(this, null) });
+      bus.emit("update", { node });
     }
   });
 };
@@ -86,7 +86,7 @@ const addShape = (g: G, shape: Shape) => {
 bus.on("edit", (model: Record<string, any>) => {
   const id = model["vector_graphics__id"];
   if (!id) return;
-  const node = nodes.value[id];
+  const node = root.value?.getChild(id);
   if (!node || !node.shape || !node.label) return;
   // 标记这是从检查器更新，不要触发 update 事件
   isUpdatingFromInspector.value = true;
@@ -95,6 +95,13 @@ bus.on("edit", (model: Record<string, any>) => {
   setTimeout(() => {
     isUpdatingFromInspector.value = false;
   }, 0);
+});
+
+bus.on("outlineSelect", (label: string) => {
+  const node = root.value?.getChild(label);
+  if (!node) return;
+  changeSelect(node.shape as Shape);
+  bus.emit("select", { node: node });
 });
 
 onMounted(() => {
@@ -112,14 +119,14 @@ onMounted(() => {
   showView(canvas, "cyan", 0.5);
 
   canvas.on("mousedown", function (this: Shape) {
-    Object.values(nodes.value).forEach((node: ShapeNode) => node.shape?.select(false));
+    root.value?.children.forEach((node: ShapeNode) => node.shape?.select(false));
   });
 
   const g1 = canvas.group();
-  addShape(g1, g1.rect(50, 50).fill("#0f6").draggable());
+  addShape(g1, g1.rect(50, 50).fill("#0f6").draggable(), g1.text("122"));
 
   const g2 = canvas.group();
-  addShape(g2, g2.rect(50, 50).move(100, 100).fill("#f96").draggable());
+  addShape(g2, g2.rect(50, 50).move(100, 100).fill("#f96").draggable(), g2.text("12123"));
 });
 </script>
 

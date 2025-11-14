@@ -7,6 +7,7 @@ export interface ShapeEvent {
 
 // 定义事件类型
 type Events = {
+  outlineSelect: string;
   select: ShapeEvent;
   update: ShapeEvent;
   edit: Record<string, any>;
